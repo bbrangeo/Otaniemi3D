@@ -64,8 +64,12 @@ angular.module('otaniemi3dApp')
         }
       ],
 
+      /**
+       * Tells whether all floorplans have been loaded.
+       * @returns {Boolean} True if all floorplans have been loaded.
+       */
       allLoaded: function() {
-        //Returns true or false if all floorplans have been loaded
+
         for (var i = 0; i < this.floors.length; i++) {
           if (this.floors[i].svg === null) {
             return false;
@@ -75,6 +79,7 @@ angular.module('otaniemi3dApp')
           }
         }
       }
+
     };
   
   });
