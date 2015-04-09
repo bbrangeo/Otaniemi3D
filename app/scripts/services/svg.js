@@ -8,7 +8,7 @@
  * Service in the otaniemi3dApp.
  */
 angular.module('otaniemi3dApp')
-  .service('d3Service', function (Rooms, Floorplans, Tooltip, usSpinnerService, twodservice, $interval) {
+  .service('Svg', function (Rooms, Floorplans, Tooltip, usSpinnerService, twodservice, $interval) {
 
     /**
      * Download all floorplans from server and append first floorplan

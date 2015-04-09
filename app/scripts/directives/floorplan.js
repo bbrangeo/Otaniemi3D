@@ -7,7 +7,7 @@
  * # floorplan
  */
 angular.module('otaniemi3dApp')
-  .directive('floorplan', ['Rooms', 'Floorplans', 'usSpinnerService', 'twodservice', function (Rooms, Floorplans, usSpinnerService, twodservice) {
+  .directive('floorplan', function (Svg, Rooms, Floorplans, usSpinnerService, twodservice) {
     return {
       restrict: 'E',
 
@@ -293,4 +293,4 @@ angular.module('otaniemi3dApp')
         });
       }//end link: function()
     }; //end return
-  }]); //end directive
+  }); //end directive

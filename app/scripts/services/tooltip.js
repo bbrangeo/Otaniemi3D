@@ -103,10 +103,14 @@ angular.module('otaniemi3dApp')
         //Show sensor values listed in the tooltip
         for (var i = 0; i < room.sensors.length; i++) {
 
+          //Capitalize sensor name
+          var sensorName = room.sensors[i].type.charAt(0).toUpperCase() +
+                           room.sensors[i].type.slice(1);
+
           var sensorInfo = infocontent
             .append('li')
             .attr('class','roominfo')
-            .text(room.sensors[i].type + ': ' + room.sensors[i].value);
+            .text(sensorName + ': ' + room.sensors[i].value);
 
           switch (room.sensors[i].type) {
             case 'temperature':
