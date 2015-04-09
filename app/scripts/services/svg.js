@@ -10,48 +10,57 @@
 angular.module('otaniemi3dApp')
   .service('Svg', function (Rooms, Floorplans, Tooltip, usSpinnerService, twodservice, $interval) {
 
+    var Svg = this;
+
     /**
      * Download all floorplans from server and append first floorplan
      * to the html document.
-     * @param {Object} first - Floorplan that is downloaded and parsed first.
+     * @param {Object[]} floors - List of floorplans that are to be downloaded.
      * @param {Object} containers - Containers for parsing and showing floorplan.
      */
-    this.getFloorplans = function(first, containers) {
+    this.getFloorplans = function(floors, containers) {
 
       //Start the loading spinner
       usSpinnerService.spin('spinner-1');
 
-      for (var i = 0; i < Floorplans.floors.length; i++) {
-        getFloorplan(Floorplans.floors[i], containers.parser);
+      for (var i = 0; i < floors.length; i++) {
+        getFloorplan(floors[0], floors[i], containers);
       }
-
-      this.appendFloorplan(first, containers.visible);
-      this.updateRoomInfo();
-
-      //Hide loading spinner because all floorplans have been downloaded and parsed.
-      usSpinnerService.stop('spinner-1');
 
     };
 
 
     /**
      * Download floorplans svg and parse it.
-     * @param {Object} floorplan - Floorplan that is to be downloaded.
+     * @param {Object} first - Floorplan that is appended to the page and shown.
+     * @param {Object} floorplan - Floorplan that is to be downloaded and parsed.
      * @param {String} container - Id for the container element.
      */
-    function getFloorplan(floorplan, container){
+    function getFloorplan(first, floorplan, containers){
 
       d3.xml(floorplan.url, 'image/svg+xml', function (xml) {
 
         if (xml) {
           floorplan.svg = xml.documentElement;
-          parseRooms(floorplan, container);
+          parseRooms(floorplan, containers.parser);
+
+          if (Floorplans.allLoaded()) {
+            Svg.appendFloorplan(first, containers.visible);
+            Svg.updateRoomInfo();
+
+            //Hide loading spinner because all floorplans have been
+            //downloaded and parsed.
+            usSpinnerService.stop('spinner-1');
+          }
         }
       });
     }
 
 
-    //Configure dragging and zooming behavior.
+    /*
+     * Zoom listener that is publicly available. For example can be
+     * used to reset zoom levels.
+     */
     this.zoomListener = d3.behavior.zoom()
       .scaleExtent([0.5, 10]);
 
@@ -67,6 +76,10 @@ angular.module('otaniemi3dApp')
       //Container tells if svg should be visible or if it's only appended
       //for parsing
       var containerNode = d3.select('#' + container).node();
+
+      if (!floorplan.svg || !containerNode) {
+        return;
+      }
 
       //Empty container from old floorplan
       while (containerNode.firstChild) {
@@ -94,7 +107,7 @@ angular.module('otaniemi3dApp')
 
       svg.selectAll('text').attr('pointer-events', 'none');
 
-      this.zoomListener
+      Svg.zoomListener
         .scale(floorplan.scale)
         .translate(floorplan.translate)
         .on('zoom', function() {
@@ -103,10 +116,11 @@ angular.module('otaniemi3dApp')
           floorplan.scale = d3.event.scale;
           floorplan.translate = d3.event.translate;
           Tooltip.elem.style('visibility', 'hidden');
-        })
-        .event(floorplan.svg);
+        });
         
-      svg.call(this.zoomListener);
+      svg.call(Svg.zoomListener);
+
+      Svg.zoomListener.event(floorplan.svg);
 
     }; //end appendFloorplan()
 
@@ -120,7 +134,7 @@ angular.module('otaniemi3dApp')
       floorplan.translate = [0, 0];
       floorplan.scale = 1;
 
-      this.zoomListener
+      Svg.zoomListener
         .scale(floorplan.scale)
         .translate(floorplan.translate)
         .event(floorplan.svg);

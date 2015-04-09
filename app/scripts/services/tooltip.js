@@ -10,8 +10,17 @@
 angular.module('otaniemi3dApp')
   .service('Tooltip', function () {
 
-    //Tooltip selection is initially an empty selection.
-    var tooltip = d3.select('');
+    /* 
+     * Tooltip selection is initially an empty selection. Use
+     * Tooltip.elem() to access it outside this service.
+     */
+    var tooltip = d3.select();
+
+    /*
+     * Room object where the mouse is hovering. Can be retrieved
+     * with Tooltip.room() when called outside this service.
+     */
+    var mouseOverRoom = null;
 
     /**
      * Set tooltip to refer to specific html element.
@@ -30,11 +39,7 @@ angular.module('otaniemi3dApp')
     /**
      * Make tooltip follow mouse movement.
      */
-    function mouseMove (skipSelectedCheck) {
-
-      if (!skipSelectedCheck && scope.selectedRoom) {
-        return;
-      }
+    function mouseMove () {
 
       if (d3.event.pageY > window.innerHeight / 2) {
         tooltip.style('bottom', (window.innerHeight-d3.event.pageY)+'px');
@@ -58,11 +63,7 @@ angular.module('otaniemi3dApp')
     /**
      * Empty tooltip and make it invisible.
      */
-    function mouseOut (skipSelectedCheck) {
-
-      if (!skipSelectedCheck && scope.selectedRoom) {
-        return;
-      }
+    function mouseOut () {
 
       tooltip
         .select('#infocontent').remove()
@@ -77,17 +78,13 @@ angular.module('otaniemi3dApp')
      * Add event listener to the room that shows tooltip on mouseover.
      * @param {Object} room - Room to which the tooltip event listener is added.
      */
-    function addToRoom(room) {
+    this.addToRoom = function(room) {
 
       //Add room-specific information to the tooltip and make tooltip visible
-      function mouseOver (skipSelectedCheck) {
+      function mouseOver () {
 
-        if (!skipSelectedCheck && scope.selectedRoom) {
-          return;
-        }
-        
         //Pass the room name to controller function
-        scope.$parent.room = room.name;
+        mouseOverRoom = room.name;
 
         var infocontent = tooltip
           .append('div')
@@ -149,8 +146,8 @@ angular.module('otaniemi3dApp')
           'Entrance'
           ];
 
-        for(var i = 0; i < roomsWithPanorama.length; i++){
-          if(room.name === roomsWithPanorama[i]){
+        for(var j = 0; j < roomsWithPanorama.length; j++){
+          if(room.name === roomsWithPanorama[j]){
             tooltip.select('#panobtn').style('display', 'block');
           }
         }
@@ -159,13 +156,8 @@ angular.module('otaniemi3dApp')
 
       } //end mouseOver()
       
-
+      /*
       function clicked () {
-
-        if (scope.highlightedRoom) {
-          clearInterval(scope.highlightedRoom.pulse);
-          scope.highlightedRoom = null;
-        }
 
         // Ignore the click since this was called after dragend
         if (d3.event.defaultPrevented) {
@@ -174,30 +166,40 @@ angular.module('otaniemi3dApp')
           mouseMove(false);
         } else {
           mouseOut(true);
-          scope.selectedRoom = room;
           mouseOver(true);
           mouseMove(true);
         }
 
       }
+      */
 
       //Set mouse events to the room node
       if (room.node) {
         d3.select(room.node)
           .on('mouseover', mouseOver)
           .on('mousemove', mouseMove)
-          .on('mouseout', mouseOut)
-          .on('click', clicked);
+          .on('mouseout', mouseOut);
+          //.on('click', clicked);
       }
 
-    } //end addTooltip()
+    }; //end addTooltip()
 
 
     /**
      * This is the public tooltip element. Element is initially an empty d3 selection.
+     * @returns {Object} D3 selection of the tooltip element.
      */
     this.elem = function () {
       return tooltip;
+    };
+
+
+    /**
+     * This is used to access the room that is hovered over with the mouse.
+     * @returns {Object} Room object where the mouse is hovering over.
+     */
+    this.room = function () {
+      return mouseOverRoom;
     };
 
   });

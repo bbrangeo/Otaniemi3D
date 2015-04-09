@@ -7,7 +7,7 @@
  * # floorplan
  */
 angular.module('otaniemi3dApp')
-  .directive('floorplan', function (Svg, Rooms, Floorplans, usSpinnerService, twodservice) {
+  .directive('floorplan', function (Svg, Rooms, Floorplans, Tooltip, usSpinnerService, twodservice) {
     return {
       restrict: 'E',
 
@@ -19,43 +19,44 @@ angular.module('otaniemi3dApp')
         resetView: '='
       },
 
-      template: '<div class="floorplan-container" style="display: inline;"></div>' + 
-                '<div class="parser" style="visibility: hidden;"></div>',
+      template: '<div id="floorplan-container" style="display: inline;"></div>' + 
+                '<div id="parser" style="visibility: hidden;"></div>',
 
-      link: function (scope, element) {
+      link: function (scope) {
 
-        var defaultFloorplan = scope.plan;
+        var containers = {
+          visible: 'floorplan-container',
+          parser: 'parser'
+        };
 
-        //Because the click event of a room node takes place after the one of the svg element,
-        //we need this variable to keep record if the event happened on a room and, therefore,
-        //should not unselect the selected room.
-        var clickWasOnRoom = false;
+        //Check if svg support. There is not point doing anything
+        //if there isn't.
+        if (scope.$parent.svgSupport) {
 
-        
-        /*
-        * Download and show default floorplan and then download
-        * other floorplans asynchronously.
-        */
+          if (scope.plan.svg === null) {
 
-      if (scope.$parent.svgSupport) {  //Check if svg support. There is not point doing anything if there isn't
-        if (defaultFloorplan.svg === null) {
-            getDefaultFloorplan();
-            } else {
-              var roomsLength = Rooms.list.length;
-              for (var i = 0; i < roomsLength; i++) {
-                addTooltip(Rooms.list[i]);
-              }
-              usSpinnerService.stop('spinner-1'); //floorplans loaded, hide the spinner
-              showFloorplan();
+            Svg.getFloorplans(Floorplans.floors, containers);
+
+          } else {
+
+            Svg.appendFloorplan(scope.plan, containers.visible);
+            
+            for (var i = 0; i < Rooms.list.length; i++) {
+              Tooltip.addToRoom(Rooms.list[i]);
+            }
+            /*
+            usSpinnerService.stop('spinner-1'); //floorplans loaded, hide the spinner
+            showFloorplan();
+            */
           }
         }
         
 
         
         
-    //    
-    //color legend functionality:
-    //    
+        //    
+        //color legend functionality:
+        //    
         var barWidth = 20,
             svgWidth = 80,
             x1 = 0,
@@ -244,53 +245,57 @@ angular.module('otaniemi3dApp')
         * it hasn't already been downloaded.
         */
         scope.$watch('plan', function () {
+
           if (scope.plan.svg) {
-            appendFloorplan(scope.plan, floorplanContainer);
+
+            Svg.appendFloorplan(scope.plan, containers.visible);
+
             // Hide the tooltip
-            tooltip
+            Tooltip.elem()
               .select('#infocontent').remove()
-              .style('visibility', null);
-            tooltip.select('#panobtn').style('display', 'none');
+              .style('visibility', null)
+                .select('#panobtn')
+                .style('display', 'none');
+
             scope.selectedRoom = null;
+
+            for (var i = 0; i < Rooms.list.length; i++) {
+              Tooltip.addToRoom(Rooms.list[i]);
+            }
+
           }
+
         });
-        
-        function resetZoom() {
-          scope.plan.translate = [0, 0];
-          scope.plan.scale = 1;
-          appendFloorplan(scope.plan, floorplanContainer, true);
-        }
 
         /*
         * Watch for sensor data updates and update every room's
         * info accordingly.
         */
         scope.$watch('data', function () {
+
           if (scope.data) {
-            updateRoomInfo();
+            Svg.updateRoomInfo(scope.data, scope.$parent.roomValueType);
           }
+
         });
 
         scope.$watch('highlightedRoom', function() {
+
           if (scope.highlightedRoom !== null) {
             scope.plan = Floorplans.floors[scope.highlightedRoom.floor];
             scope.plan.translate = [0, 0];
             scope.plan.scale = 1;
-            appendFloorplan(scope.plan, floorplanContainer);
-            scope.highlightedRoom.pulse = highlightRoom(scope.highlightedRoom);
+            Svg.appendFloorplan(scope.plan, containers.visible);
+            scope.highlightedRoom.pulse = Svg.highlightRoom(scope.highlightedRoom);
           }
+
         });
         
         scope.$watch('roomValueType', function() {
           changeLegendText();
           changeLegendStyle();
         });
-        
-        scope.$watch('resetView', function() {
-          if (scope.resetView === null) {return;}
-          
-          resetZoom();
-        });
+
       }//end link: function()
     }; //end return
   }); //end directive
