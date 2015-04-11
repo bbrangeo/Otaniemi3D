@@ -40,14 +40,7 @@ angular.module('otaniemi3dApp')
           } else {
 
             Svg.appendFloorplan(scope.plan, containers.visible);
-            
-            for (var i = 0; i < Rooms.list.length; i++) {
-              Tooltip.addToRoom(Rooms.list[i]);
-            }
-            /*
-            usSpinnerService.stop('spinner-1'); //floorplans loaded, hide the spinner
-            showFloorplan();
-            */
+            usSpinnerService.stop('spinner-1');
           }
         }
         
@@ -250,18 +243,7 @@ angular.module('otaniemi3dApp')
 
             Svg.appendFloorplan(scope.plan, containers.visible);
 
-            // Hide the tooltip
-            Tooltip.elem()
-              .select('#infocontent').remove()
-              .style('visibility', null)
-                .select('#panobtn')
-                .style('display', 'none');
-
             scope.selectedRoom = null;
-
-            for (var i = 0; i < Rooms.list.length; i++) {
-              Tooltip.addToRoom(Rooms.list[i]);
-            }
 
           }
 

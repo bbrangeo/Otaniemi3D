@@ -77,52 +77,78 @@ angular.module('otaniemi3dApp')
       //for parsing
       var containerNode = d3.select('#' + container).node();
 
-      if (!floorplan.svg || !containerNode) {
-        return;
-      }
+      if (floorplan.svg && containerNode) {
 
-      //Empty container from old floorplan
-      while (containerNode.firstChild) {
-        containerNode.removeChild(containerNode.firstChild);
-      }
-
-      //Add new floorplan
-      var svg = containerNode
-        .appendChild(floorplan.svg);
-
-      svg = d3.select(svg)
-          .attr('width', '100%')
-          .attr('height', '100%')
-          .attr('pointer-events', 'all');
-
-      svg.selectAll('path').each(function() {
-
-        var elem = d3.select(this);
-
-        if (elem.attr('class') !== floorplan.roomArea) {
-          elem.attr('pointer-events', 'none');
+        //Empty container from old floorplan
+        while (containerNode.firstChild) {
+          containerNode.removeChild(containerNode.firstChild);
         }
 
-      });
+        //Add new floorplan
+        var svg = containerNode
+          .appendChild(floorplan.svg);
 
-      svg.selectAll('text').attr('pointer-events', 'none');
+        svg = d3.select(svg)
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('pointer-events', 'all');
 
-      Svg.zoomListener
-        .scale(floorplan.scale)
-        .translate(floorplan.translate)
-        .on('zoom', function() {
-          svg.select('g').attr('transform', 'translate(' + d3.event.translate +
-                               ')scale(' + d3.event.scale + ')');
-          floorplan.scale = d3.event.scale;
-          floorplan.translate = d3.event.translate;
-          Tooltip.elem.style('visibility', 'hidden');
+        svg.selectAll('path').each(function() {
+
+          var elem = d3.select(this);
+
+          if (elem.attr('class') !== floorplan.roomArea) {
+            elem.attr('pointer-events', 'none');
+          }
+
         });
-        
-      svg.call(Svg.zoomListener);
 
-      Svg.zoomListener.event(floorplan.svg);
+        svg.selectAll('text').attr('pointer-events', 'none');
 
+        Svg.zoomListener
+          .scale(floorplan.scale)
+          .translate(floorplan.translate)
+          .on('zoom', function() {
+            svg.select('g').attr('transform', 'translate(' + d3.event.translate +
+                                 ')scale(' + d3.event.scale + ')');
+            floorplan.scale = d3.event.scale;
+            floorplan.translate = d3.event.translate;
+            Tooltip.elem().style('visibility', 'hidden');
+          });
+          
+        svg.call(Svg.zoomListener);
+
+        Svg.zoomListener.event(svg);
+
+        for (var i = 0; i < Rooms.list.length; i++) {
+          addTooltip(Rooms.list[i]);
+        }
+
+      }
     }; //end appendFloorplan()
+
+
+    /**
+     * Add tooltip event listener to a room.
+     * @param {Object} room - Add tooltip event listener to this room.
+     */
+    function addTooltip(room) {
+
+      if (room.node) {
+
+        d3.select(room.node)
+          .on('mouseover', function() {
+            Tooltip.show(room);
+          })
+          .on('mousemove', function() {
+            Tooltip.move();
+          })
+          .on('mouseout', function() {
+            Tooltip.hide();
+          });
+          //.on('click', clicked);
+      }
+    }
 
 
     /**
@@ -148,6 +174,8 @@ angular.module('otaniemi3dApp')
      * @param {Object} container - Container where the floorplan svg is appended.
      */
     function parseRooms(floorplan, container) {
+
+      Svg.appendFloorplan(floorplan, container);
 
       d3.select(floorplan.svg).selectAll('.' + floorplan.roomNumber).each(function () {
 
@@ -184,7 +212,6 @@ angular.module('otaniemi3dApp')
                 }
                 if (!roomExists) {
                   Rooms.add(roomText.textContent, roomArea, i);
-                  Tooltip.addToRoom(Rooms.list[Rooms.list.length-1]);
                 }
               }
             }

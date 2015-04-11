@@ -63,7 +63,6 @@ angular.module('otaniemi3dApp')
       if (!sensorExists) {
         this.addSensor(roomIndex, sensor);
       }
-      
     };
   
   });
